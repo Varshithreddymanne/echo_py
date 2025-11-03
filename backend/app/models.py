@@ -14,7 +14,6 @@ class UserLogin(BaseModel):
 class PostCreate(BaseModel):
     title: str
     content: str
-    username: str
 
 class PostOut(BaseModel):
     id: str = Field(..., alias="_id")

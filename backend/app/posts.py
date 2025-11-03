@@ -7,7 +7,6 @@ from datetime import datetime
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
-# helper to convert ObjectId -> string
 def to_json(doc):
     doc = dict(doc)
     if "_id" in doc:
@@ -23,9 +22,11 @@ async def list_posts():
     return posts
 
 @router.post("/")
-async def create_post(post: PostCreate):
+async def create_post(post: PostCreate, current_user: dict = Depends(verify_token)):
+    print("✅ Current user:", current_user)
+    print("✅ Received post:", post.dict())
     data = post.dict()
-    data.update({"likes": 0, "comments": [], "created_at": datetime.utcnow()})
+    data.update({"username": current_user["username"], "likes": 0, "comments": [], "created_at": datetime.utcnow()})
     result = await db.posts.insert_one(data)
     return {"post_id": str(result.inserted_id)}
 
@@ -47,7 +48,6 @@ async def add_comment(post_id: str, comment: CommentCreate):
         oid = ObjectId(post_id)
     except:
         raise HTTPException(400, "Invalid post id")
-    # ensure post exists
     post = await db.posts.find_one({"_id": oid})
     if not post:
         raise HTTPException(404, "Post not found")
